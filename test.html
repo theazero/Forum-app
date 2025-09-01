@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Test - The Fashion Spot</title>
+    <style>
+        @tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { @apply bg-gray-50 text-gray-900 font-sans; }
+
+/* === Header / Topnav === */
+.header { @apply sticky top-0 z-40 bg-white border-b border-gray-200; }
+.brand  { @apply font-semibold text-lg tracking-tight; }
+.topnav { @apply flex items-center gap-4 text-[13px]; }
+.tab    { @apply px-3 py-2 rounded-md border border-transparent; }
+.tab-active { @apply bg-purple-700 text-white; }
+.tab:hover { @apply bg-gray-100; }
+
+/* === Link style === */
+.link     { @apply text-purple-700 hover:underline; }
+
+/* === Toolbar under nav === */
+.toolbar  { @apply border-b border-gray-200 bg-white; }
+.toolbar-inner { @apply container h-10 flex items-center gap-6 text-[13px]; }
+.toolbar a { @apply text-purple-700 hover:underline; }
+
+/* === Layout helpers === */
+.container { @apply mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8; }
+.section   { @apply py-8 md:py-10; }
+
+/* === Panels === */
+.panel     { @apply bg-white border border-gray-200 rounded-lg; }
+.panel-pad { @apply p-4 md:p-6; }
+
+/* === Subtabs (Latest posts / …) === */
+.subtabs     { @apply flex items-center gap-0 text-[13px] border-b border-gray-200; }
+.subtab      { @apply px-3 py-2 border-r border-gray-200 bg-gray-100; }
+.subtab:last-child { @apply border-r-0; }
+.subtab-active { @apply bg-white text-purple-700 font-semibold; }
+
+/* === Thread "table" === */
+.thread-list { @apply panel; }
+.thread-head { @apply grid grid-cols-[1fr,160px,240px] gap-4 px-4 py-3 text-[12px] text-gray-500 font-semibold border-b border-gray-200; }
+.thread-row  { @apply grid grid-cols-[1fr,160px,240px] gap-4 px-4 py-4 border-b border-gray-200 bg-white; }
+.thread-row:nth-child(even) { @apply bg-gray-50; }
+.thread-title { @apply text-[15px] font-medium text-purple-700 hover:underline; }
+.thread-ex    { @apply text-[13px] text-gray-500 line-clamp-1; }
+.thread-stat  { @apply text-[13px] text-gray-600; }
+.last-post    { @apply text-[13px]; }
+.badge        { @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-gray-200 text-gray-500; }
+.badge-lock   { @apply bg-gray-100 text-gray-900; }
+.badge-hot    { @apply border-none bg-yellow-200 text-yellow-800; }
+
+/* === Sidebar === */
+.sidebar-box  { @apply panel panel-pad; }
+.sidebar-title{ @apply text-[13px] font-semibold mb-3; }
+
+/* === Buttons === */
+.btn          { @apply inline-flex items-center justify-center gap-2 h-9 px-4 border border-gray-200 rounded-md text-[13px]; }
+.btn-primary  { @apply bg-purple-700 text-white border-purple-700; }
+        :root {
+            --bg: #f6f7f9;
+            --panel: #ffffff;
+            --fg: #1f2937;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --accent: #6d28d9;
+            --accent-hover: #5b21b6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--fg);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>CSS Import Debug</h1>
+        
+        <div class="status success">
+            <h2>CSS is working!</h2>
+            <p>If you can see this styled box, your CSS is working correctly in this HTML file.</p>
+        </div>
+
+        <div class="status error">
+            <h2>Vite Import Issue</h2>
+            <p>Your <code>index.css</code> is not being imported by Vite. Let's fix this:</p>
+            <ol>
+                <li>Open <code>src/main.tsx</code></li>
+                <li>Ensure it contains: <code>import './index.css'</code></li>
+                <li>Check that <code>index.css</code> is in the <code>src</code> directory</li>
+                <li>Restart your dev server: <code>npm run dev</code></li>
+            </ol>
+        </div>
+
+        <h2>Quick Fixes:</h2>
+        <ul>
+            <li>Rename your CSS file to <code>App.css</code> and import it in <code>App.tsx</code></li>
+            <li>Check your Vite configuration</li>
+            <li>Verify file permissions</li>
+        </ul>
+
+        <a href="http://localhost:5173" class="btn">Back to Your App</a>
+    </div>
+</body>
+</html>

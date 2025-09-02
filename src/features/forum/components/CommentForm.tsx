@@ -1,31 +1,80 @@
-import { useState } from 'react'
-import { useForum } from '../state/ForumProvider'
-import { uid } from '../../../lib/uid'
+// src/components/CommentForm.tsx
+import React, { useState } from 'react';
+import { Comment } from '../types';
 
-export default function CommentForm({ threadId, disabled }: { threadId: number; disabled?: boolean }) {
-  const { state, addComment } = useForum()
-  const [content, setContent] = useState('')
+interface CommentFormProps {
+  threadId: number;
+  onSubmit: (comment: Partial<Comment>) => void;
+  onCancel?: () => void;
+  initialContent?: string;
+}
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (disabled || content.trim().length < 1) return
-    addComment({
-      id: uid(),
+const CommentForm: React.FC<CommentFormProps> = ({
+  threadId,
+  onSubmit,
+  onCancel,
+  initialContent = ''
+}) => {
+  const [content, setContent] = useState(initialContent);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim()) return;
+    
+    setIsSubmitting(true);
+    
+    const commentData: Partial<Comment> = {
       threadId,
-      content,
-      creatorId: state.currentUserId ?? state.users[0].id,
-      createdAt: new Date().toISOString()
-    })
-    setContent('')
-  }
+      content: content.trim(),
+      creationDate: new Date().toISOString(),
+      isAnswer: false
+    };
+    
+    try {
+      await onSubmit(commentData);
+      setContent('');
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <form onSubmit={submit} className="bg-white border border-line rounded-xl p-6 space-y-3">
-      <textarea rows={4} value={content} onChange={e=>setContent(e.target.value)}
-        disabled={disabled}
-        placeholder={disabled ? 'Thread is locked.' : 'Write a comment…'}
-        className="w-full border border-line rounded-lg px-4 py-3 bg-white" />
-      <button className="btn" disabled={disabled} type="submit">Post Comment</button>
+    <form onSubmit={handleSubmit} className="comment-form">
+      <div className="form-group">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Write your comment..."
+          rows={4}
+          required
+        />
+      </div>
+      
+      <div className="form-actions">
+        {onCancel && (
+          <button 
+            type="button" 
+            onClick={onCancel}
+            className="btn-cancel"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+        )}
+        
+        <button 
+          type="submit" 
+          disabled={isSubmitting || !content.trim()}
+          className="btn-submit"
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit Comment'}
+        </button>
+      </div>
     </form>
-  )
-}
+  );
+};
+
+export default CommentForm;

@@ -1,58 +1,97 @@
-import { useState } from 'react'
-import { z } from 'zod'
-import { uid } from '../../../lib/uid'
-import { useForum } from '../state/ForumProvider'
-import type { ThreadCategory } from '../types'
+// src/components/ThreadForm.tsx
+import React, { useState } from 'react';
+import { Thread, ThreadCategory } from '../types';
 
-const schema = z.object({
-  title: z.string().min(3),
-  description: z.string().min(10),
-  category: z.union([z.literal('THREAD'), z.literal('QNA')])
-})
-type FormData = z.infer<typeof schema>
+interface ThreadFormProps {
+  onSubmit: (thread: Partial<Thread>) => void;
+  onCancel: () => void;
+  initialData?: Thread;
+}
 
-export default function ThreadForm({ onCreated }: { onCreated?: (id: number) => void }) {
-  const { state, addThread } = useForum()
-  const [form, setForm] = useState<FormData>({ title: '', description: '', category: 'THREAD' })
-  const [err, setErr] = useState<string | null>(null)
+const ThreadForm: React.FC<ThreadFormProps> = ({
+  onSubmit,
+  onCancel,
+  initialData
+}) => {
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [category, setCategory] = useState<ThreadCategory>(initialData?.category || 'THREAD');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    const parsed = schema.safeParse(form)
-    if (!parsed.success) { setErr('Kontrollera fälten.'); return }
-    const id = uid()
-    addThread({
-      id,
-      title: form.title,
-      description: form.description,
-      category: form.category as ThreadCategory,
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !description.trim()) return;
+    
+    setIsSubmitting(true);
+    
+    const threadData: Partial<Thread> = {
+      title: title.trim(),
+      category,
+      description: description.trim(),
       creationDate: new Date().toISOString(),
-      creatorId: state.currentUserId ?? state.users[0].id
-    })
-    onCreated?.(id)
-  }
+      isLocked: false
+    };
+    
+    if (category === 'QNA') {
+      (threadData as any).isAnswered = false;
+    }
+    
+    try {
+      await onSubmit(threadData);
+    } catch (error) {
+      console.error('Error submitting thread:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <form onSubmit={submit} className="bg-white border border-line rounded-xl p-6 md:p-8 max-w-2xl space-y-6">
-      {err && <p className="text-red-600">{err}</p>}
-      <div>
-        <label className="block text-sm mb-2">Title</label>
-        <input value={form.title} onChange={e=>setForm(f=>({...f, title: e.target.value}))}
-               className="w-full border border-line rounded-lg px-4 py-3 bg-white" />
+    <form onSubmit={handleSubmit} className="thread-form">
+      <h2>{initialData ? 'Edit Thread' : 'Create New Thread'}</h2>
+      
+      <div className="form-group">
+        <label>Title</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          maxLength={200}
+        />
       </div>
-      <div>
-        <label className="block text-sm mb-2">Category</label>
-        <select value={form.category} onChange={e=>setForm(f=>({...f, category: e.target.value as FormData['category']}))} className="w-full border border-line rounded-lg px-4 py-3 bg-white">
-          <option value="THREAD">THREAD</option>
-          <option value="QNA">QNA</option>
+      
+      <div className="form-group">
+        <label>Category</label>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as ThreadCategory)}
+          required
+        >
+          <option value="THREAD">Discussion</option>
+          <option value="QNA">Question & Answer</option>
         </select>
       </div>
-      <div>
-        <label className="block text-sm mb-2">Description</label>
-        <textarea rows={8} value={form.description} onChange={e=>setForm(f=>({...f, description: e.target.value}))}
-                  className="w-full border border-line rounded-lg px-4 py-3 bg-white" />
+      
+      <div className="form-group">
+        <label>Description</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required
+          rows={5}
+        />
       </div>
-      <button className="btn btn-primary" type="submit">Create Thread</button>
+      
+      <div className="form-actions">
+        <button type="button" onClick={onCancel} disabled={isSubmitting}>
+          Cancel
+        </button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : (initialData ? 'Update' : 'Create')}
+        </button>
+      </div>
     </form>
-  )
-}
+  );
+};
+
+export default ThreadForm;

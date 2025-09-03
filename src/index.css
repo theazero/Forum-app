@@ -767,3 +767,22 @@
       font-size: 1.5rem;
     }
   }
+
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  /* Om dina paneler har en annan stil, anpassa dessa */
+  .panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .panel-pad {
+    padding: 1rem;
+  }

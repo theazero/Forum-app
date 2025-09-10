@@ -1,196 +1,172 @@
-// src/App.tsx
-import React, { useState, useEffect } from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { storageService } from './services/storageService';
-import { Thread, Comment, User } from './types';
-import ThreadList from '/components/ThreadList';
-import ThreadDetail from './components/ThreadDetail';
-import ThreadForm from './components/ThreadForm';
-import { LoginForm, RegisterForm } from './components/AuthForms';
-import './index.css';
+// src/app/App.tsx
+import React, { useEffect, useState } from "react";
+import { Routes, Route, useNavigate, useParams, Link } from "react-router-dom";
+import Header from "src/app/layout/Header"; 
 
-// Initialize default data
+
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { storageService } from "@/services/storageService";
+import { Thread, Comment } from "@/features/forum/types"; 
+
+import ThreadList from "@/features/forum/components/ThreadList";
+import ThreadDetail from "@/features/forum/components/ThreadDetail";
+import ThreadForm from "@/features/forum/components/ThreadForm";
+import { LoginForm, RegisterForm } from "@/features/forum/components/AuthForms";
+
+import "./index.css";
+
 storageService.initializeDefaultData();
 
-const ForumApp: React.FC = () => {
-  const [view, setView] = useState<'list' | 'detail' | 'newThread' | 'login' | 'register'>('list');
+
+function HomePage() {
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadThreads();
+    setThreads(storageService.getThreads());
   }, []);
 
-  useEffect(() => {
-    if (selectedThread) {
-      loadComments(selectedThread.id);
-    }
-  }, [selectedThread]);
+  const onThreadClick = (thread: Thread) => navigate(`/thread/${thread.id}`);
+  const onNewThread = () => (user ? navigate("/new") : navigate("/login"));
 
-  const loadThreads = () => {
-    const loadedThreads = storageService.getThreads();
-    setThreads(loadedThreads);
-  };
+  return (
+    <ThreadList
+      threads={threads}
+      onThreadClick={onThreadClick}
+      onNewThread={onNewThread}
+    />
+  );
+}
 
-  const loadComments = (threadId: number) => {
-    const loadedComments = storageService.getCommentsByThreadId(threadId);
-    setComments(loadedComments);
-  };
+function NewThreadPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleThreadClick = (thread: Thread) => {
-    setSelectedThread(thread);
-    setView('detail');
-  };
-
-  const handleBackToList = () => {
-    setSelectedThread(null);
-    setView('list');
-  };
-
-  const handleNewThread = () => {
-    if (!user) {
-      setView('login');
-      return;
-    }
-    setView('newThread');
-  };
-
-  const handleAddThread = async (threadData: Partial<Thread>) => {
+  const handleAddThread = (data: Partial<Thread>) => {
+    if (!user) return navigate("/login");
     const newThread: Thread = {
-      ...threadData,
+      ...(data as Thread),
       id: Date.now(),
-      creator: user!,
-    } as Thread;
-
+      creator: user,
+    };
     storageService.saveThread(newThread);
-    loadThreads();
-    setView('list');
-  };
-
-  const handleUpdateThread = async (thread: Thread) => {
-    storageService.saveThread(thread);
-    loadThreads();
-    
-    if (selectedThread && selectedThread.id === thread.id) {
-      setSelectedThread(thread);
-    }
-  };
-
-  const handleAddComment = async (commentData: Partial<Comment>) => {
-    const newComment: Comment = {
-      ...commentData,
-      id: Date.now(),
-      creator: user!,
-    } as Comment;
-
-    storageService.saveComment(newComment);
-    
-    if (selectedThread) {
-      loadComments(selectedThread.id);
-    }
-  };
-
-  const handleUpdateComment = async (comment: Comment) => {
-    storageService.saveComment(comment);
-    
-    if (selectedThread) {
-      loadComments(selectedThread.id);
-    }
-  };
-
-  const renderContent = () => {
-    switch (view) {
-      case 'login':
-        return (
-          <div className="auth-container">
-            <LoginForm />
-            <p>
-              Don't have an account?{' '}
-              <button onClick={() => setView('register')} className="link-button">
-                Register here
-              </button>
-            </p>
-          </div>
-        );
-      
-      case 'register':
-        return (
-          <div className="auth-container">
-            <RegisterForm />
-            <p>
-              Already have an account?{' '}
-              <button onClick={() => setView('login')} className="link-button">
-                Login here
-              </button>
-            </p>
-          </div>
-        );
-      
-      case 'newThread':
-        return (
-          <ThreadForm
-            onSubmit={handleAddThread}
-            onCancel={() => setView('list')}
-          />
-        );
-      
-      case 'detail':
-        return selectedThread ? (
-          <ThreadDetail
-            thread={selectedThread}
-            comments={comments}
-            onUpdateThread={handleUpdateThread}
-            onAddComment={handleAddComment}
-            onUpdateComment={handleUpdateComment}
-            onBack={handleBackToList}
-          />
-        ) : null;
-      
-      default:
-        return (
-          <ThreadList
-            threads={threads}
-            onThreadClick={handleThreadClick}
-            onNewThread={handleNewThread}
-          />
-        );
-    }
+    navigate("/");
   };
 
   return (
+    <ThreadForm
+      onSubmit={handleAddThread}
+      onCancel={() => navigate("/")}
+    />
+  );
+}
+
+function ThreadPage() {
+  const { id } = useParams<{ id: string }>();
+  const threadId = Number(id);
+  const [thread, setThread] = useState<Thread | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const t = storageService.getThreads().find(x => x.id === threadId) || null;
+    setThread(t);
+    setComments(storageService.getCommentsByThreadId(threadId));
+  }, [threadId]);
+
+  const onUpdateThread = (t: Thread) => {
+    storageService.saveThread(t);
+    setThread(t);
+  };
+
+  const onAddComment = (partial: Partial<Comment>) => {
+    if (!user) return navigate("/login");
+    const newComment: Comment = {
+      ...(partial as Comment),
+      id: Date.now(),
+      creator: user,
+      creationDate: new Date().toISOString(),
+      isAnswer: false,
+      threadId,
+    };
+    storageService.saveComment(newComment);
+    setComments(storageService.getCommentsByThreadId(threadId));
+  };
+
+  const onUpdateComment = (c: Comment) => {
+    storageService.saveComment(c);
+    setComments(storageService.getCommentsByThreadId(threadId));
+  };
+
+  if (!thread) {
+    return (
+      <div className="app-main">
+        <p>Thread not found.</p>
+        <button onClick={() => navigate("/")}>Back</button>
+      </div>
+    );
+  }
+
+  return (
+    <ThreadDetail
+      thread={thread}
+      comments={comments}
+      onUpdateThread={onUpdateThread}
+      onAddComment={onAddComment}
+      onUpdateComment={onUpdateComment}
+      onBack={() => navigate("/")}
+    />
+  );
+}
+
+function LoginPage() {
+  return (
+    <div className="auth-container">
+      <LoginForm />
+      <p>
+        Don&apos;t have an account?{" "}
+        <Link to="/register" className="link-button">Register here</Link>
+      </p>
+    </div>
+  );
+}
+
+function RegisterPage() {
+  return (
+    <div className="auth-container">
+      <RegisterForm />
+      <p>
+        Already have an account?{" "}
+        <Link to="/login" className="link-button">Login here</Link>
+      </p>
+    </div>
+  );
+}
+
+function Shell() {
+  return (
     <div className="app">
-      <header className="app-header">
-        <h1>Forum App</h1>
-        <div className="user-menu">
-          {user ? (
-            <>
-              <span>Welcome, {user.userName}</span>
-              <button onClick={logout}>Logout</button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => setView('login')}>Login</button>
-              <button onClick={() => setView('register')}>Register</button>
-            </>
-          )}
-        </div>
-      </header>
-      
+      <Header />
       <main className="app-main">
-        {renderContent()}
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/new" element={<NewThreadPage />} />
+          <Route path="/thread/:id" element={<ThreadPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="*" element={<div>Page not found</div>} />
+        </Routes>
       </main>
     </div>
   );
-};
+}
 
-const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <ForumApp />
-    </AuthProvider>
-  );
-};
+const App: React.FC = () => (
+  <AuthProvider>
+    <Shell />
+  </AuthProvider>
+);
 
 export default App;

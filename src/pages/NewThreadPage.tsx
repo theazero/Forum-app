@@ -15,14 +15,11 @@ export default function NewThreadPage() {
     }
 
     try {
-      // Hämta befintliga data
       const existingThreads = getThreads()
       const users = getUsers()
-      
-      // Hitta den fullständiga användarinformationen
+    
       const currentUser = users.find(u => u.id === user.id) || user
 
-      // Skapa den nya tråden
       const newThread: Thread = {
         id: Date.now(),
         title: threadData.title || '',
@@ -36,11 +33,9 @@ export default function NewThreadPage() {
         })
       }
 
-      // Spara till localStorage
       const updatedThreads = [newThread, ...existingThreads]
       saveThreads(updatedThreads)
 
-      // Navigera till den nya tråden
       navigate(`/thread/${newThread.id}`)
     } catch (error) {
       console.error('Error creating thread:', error)
@@ -49,7 +44,7 @@ export default function NewThreadPage() {
   }
 
   const handleCancel = () => {
-    navigate(-1) // Gå tillbaka till föregående sida
+    navigate(-1) // gör så man kan gå tillbaka till föregående sida
   }
 
   return (

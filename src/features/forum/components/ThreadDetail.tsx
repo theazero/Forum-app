@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
-import { Thread, Comment } from '../types';
-import { useAuth } from '../../../contexts/AuthContext';
-import { canLockThread } from '../../../services/utils/permissions';
-import CommentList from './CommentList';
-import CommentForm from './CommentForm';
+import React, { useState } from "react";
+import { Thread, QNAThread, Comment } from "../types";
+import { useAuth } from "@/contexts/AuthContext";
+import { canLockThread } from "src/services/utils/permissions";
+import CommentList from "./CommentList";
+import CommentForm from "./CommentForm";
 
 interface ThreadDetailProps {
-  thread: Thread | null;
+  thread: Thread | QNAThread | null;
   comments: Comment[];
-  onUpdateThread: (thread: Thread) => void;
+  onUpdateThread: (thread: Thread | QNAThread) => void;
   onAddComment: (comment: Partial<Comment>) => void;
   onUpdateComment: (comment: Comment) => void;
   onBack: () => void;
 }
+
+const isQNA = (t: Thread | QNAThread): t is QNAThread => t.category === "QNA";
 
 const ThreadDetail: React.FC<ThreadDetailProps> = ({
   thread,
@@ -20,18 +22,16 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
   onUpdateThread,
   onAddComment,
   onUpdateComment,
-  onBack
+  onBack,
 }) => {
   const { user } = useAuth();
   const [isReplying, setIsReplying] = useState(false);
+  const [replyTo, setReplyTo] = useState<number | undefined>(undefined);
 
-  // Handle case where thread is null/undefined
   if (!thread) {
     return (
       <div className="thread-detail">
-        <button onClick={onBack} className="btn-back">
-          ← Back to thread list
-        </button>
+        <button onClick={onBack} className="btn-back">← Back to thread list</button>
         <div>Thread not found or loading...</div>
       </div>
     );
@@ -39,91 +39,88 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
 
   const handleLockToggle = () => {
     if (canLockThread(user)) {
-      onUpdateThread({
-        ...thread,
-        isLocked: !thread.isLocked
-      });
+      onUpdateThread({ ...thread, isLocked: !thread.isLocked });
     }
   };
 
   const handleMarkAsAnswer = (commentId: number) => {
-    if (thread.category === 'QNA' && user?.id === thread.creator.id) {
-      const qnaThread = thread as any;
-      onUpdateThread({
-        ...thread,
-        isAnswered: true,
-        commentAnswerId: commentId
-      });
-      
-      // Also update the comment
-      const comment = comments.find(c => c.id === commentId);
-      if (comment) {
-        onUpdateComment({
-          ...comment,
-          isAnswer: true
-        });
-      }
+    if (isQNA(thread) && user?.id === thread.creator.id) {
+      onUpdateThread({ ...thread, isAnswered: true, commentAnswerId: commentId });
+
+      const comment = comments.find((c) => c.id === commentId);
+      if (comment) onUpdateComment({ ...comment, isAnswer: true });
     }
+  };
+
+  const startReply = (parentId: number) => {
+    setReplyTo(parentId);
+    setIsReplying(true);
   };
 
   return (
     <div className="thread-detail">
-      <button onClick={onBack} className="btn-back">
-        Back to thread list
-      </button>
-      
+      <button onClick={onBack} className="btn-back">Back to thread list</button>
+
       <div className="thread-header">
         <h1>{thread.title}</h1>
-        
         {canLockThread(user) && (
           <div className="thread-actions">
             <button onClick={handleLockToggle} className="btn-lock">
-              {thread.isLocked ? 'Unlock' : 'Lock'} Thread
+              {thread.isLocked ? "Unlock" : "Lock"} Thread
             </button>
           </div>
         )}
       </div>
-      
+
       <div className="thread-meta">
-        <span>Created by {thread.creator?.userName || 'Unknown user'}</span>
+        <span>Created by {thread.creator?.userName ?? "Unknown user"}</span>
         <span>{new Date(thread.creationDate).toLocaleDateString()}</span>
         {thread.isLocked && <span className="thread-locked">Locked</span>}
+        {isQNA(thread) && thread.isAnswered && <span className="answer-badge">Answered</span>}
       </div>
-      
+
       <div className="thread-content">
         <p>{thread.description}</p>
       </div>
-      
+
       {!thread.isLocked ? (
         <div className="comment-section">
-          <h2>Comments ({(comments || []).length})</h2>
-          
+          <h2>Comments ({comments.length})</h2>
+
           {user ? (
             <>
               {!isReplying && (
-                <button 
-                  onClick={() => setIsReplying(true)}
-                  className="btn-reply"
-                >
+                <button onClick={() => { setReplyTo(undefined); setIsReplying(true); }} className="btn-reply">
                   Add Comment
                 </button>
               )}
-              
+
               {isReplying && (
-                <CommentForm
-                  threadId={thread.id}
-                  onSubmit={(commentData) => {
-                    onAddComment(commentData);
-                    setIsReplying(false);
-                  }}
-                  onCancel={() => setIsReplying(false)}
-                />
+                <div style={{ marginBottom: 16 }}>
+                  {replyTo && (
+                    <div className="badge" style={{ marginBottom: 8 }}>
+                      Replying to comment #{replyTo}
+                    </div>
+                  )}
+                  <CommentForm
+                    threadId={thread.id}
+                    parentId={replyTo}                      
+                    onSubmit={(commentData) => {
+                      onAddComment(commentData);
+                      setIsReplying(false);
+                      setReplyTo(undefined);
+                    }}
+                    onCancel={() => { setIsReplying(false); setReplyTo(undefined); }}
+                  />
+                </div>
               )}
-              
+
               <CommentList
                 comments={comments}
                 currentUser={user}
-                onMarkAsAnswer={thread.category === 'QNA' ? handleMarkAsAnswer : undefined}
+                parentThread={isQNA(thread) ? thread : undefined}
+                onMarkAsAnswer={isQNA(thread) ? handleMarkAsAnswer : undefined}
+                onReply={startReply}                         
               />
             </>
           ) : (

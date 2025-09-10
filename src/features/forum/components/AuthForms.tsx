@@ -1,4 +1,3 @@
-// src/components/AuthForms.tsx
 import React, { useState } from 'react';
 import { useAuth } from 'src/contexts/AuthContext';
 

@@ -1,4 +1,3 @@
-// src/types.ts
 export type ThreadCategory = "THREAD" | "QNA";
 
 export type User = {
@@ -29,6 +28,7 @@ export type Comment = {
   id: number;
   threadId: number;
   content: string;
+  parentId?: number; 
   creator: User;
   creationDate: string;
   isAnswer: boolean;

@@ -31,13 +31,11 @@ export const saveUsers = (users: User[]) => {
   userStorage.set(users);
 };
 
-// Hjälpfunktion för att hämta kommentarer för en specifik tråd
 export const getCommentsForThread = (threadId: number): Comment[] => {
   const comments = getComments();
   return comments.filter(comment => comment.threadId === threadId);
 };
 
-// Hjälpfunktion för att hämta en användare med ID
 export const getUserById = (userId: number): User | undefined => {
   const users = getUsers();
   return users.find(user => user.id === userId);

@@ -1,12 +1,12 @@
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
-import Breadcrumbs from './Breadcrumbs'
+import Headerbar from "./Header"
 
 export default function Layout() {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <Header />
-      <Breadcrumbs />
+      <Headerbar />
       <main className="container py-8 md:py-10">
         <Outlet />
       </main>

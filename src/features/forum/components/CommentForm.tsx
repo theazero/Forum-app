@@ -1,19 +1,20 @@
-// src/components/CommentForm.tsx
-import React, { useState } from 'react';
-import { Comment } from '../types';
+import React, { useState } from "react";
+import { Comment } from "../types";
 
 interface CommentFormProps {
   threadId: number;
-  onSubmit: (comment: Partial<Comment>) => void;
+  parentId?: number; 
+  onSubmit: (comment: Partial<Comment>) => void | Promise<void>;
   onCancel?: () => void;
   initialContent?: string;
 }
 
 const CommentForm: React.FC<CommentFormProps> = ({
   threadId,
+  parentId,
   onSubmit,
   onCancel,
-  initialContent = ''
+  initialContent = "",
 }) => {
   const [content, setContent] = useState(initialContent);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,21 +22,22 @@ const CommentForm: React.FC<CommentFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
-    
+
     setIsSubmitting(true);
-    
+
     const commentData: Partial<Comment> = {
       threadId,
+      parentId, 
       content: content.trim(),
       creationDate: new Date().toISOString(),
-      isAnswer: false
+      isAnswer: false,
     };
-    
+
     try {
       await onSubmit(commentData);
-      setContent('');
+      setContent("");
     } catch (error) {
-      console.error('Error submitting comment:', error);
+      console.error("Error submitting comment:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -52,11 +54,11 @@ const CommentForm: React.FC<CommentFormProps> = ({
           required
         />
       </div>
-      
+
       <div className="form-actions">
         {onCancel && (
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={onCancel}
             className="btn-cancel"
             disabled={isSubmitting}
@@ -64,13 +66,13 @@ const CommentForm: React.FC<CommentFormProps> = ({
             Cancel
           </button>
         )}
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           disabled={isSubmitting || !content.trim()}
           className="btn-submit"
         >
-          {isSubmitting ? 'Submitting...' : 'Submit Comment'}
+          {isSubmitting ? "Submitting..." : "Submit Comment"}
         </button>
       </div>
     </form>

@@ -1,36 +1,90 @@
-// src/features/forum/components/CommentList.tsx
-import React from 'react';
-import { Comment, User } from '../types';
-import CommentItem from './CommentItem';
+import React from "react";
+import { Comment, User, QNAThread } from "../types";
+import CommentItem from "./CommentItem";
 
 interface CommentListProps {
-  comments?: Comment[]; // kan vara undefined under loading
+  comments?: Comment[];
   currentUser: User;
+  parentThread?: QNAThread;
   onMarkAsAnswer?: (commentId: number) => void;
+  onReply?: (parentId: number) => void; // <-- NYTT
 }
 
+type CommentNode = Comment & { children: CommentNode[] };
+
+function buildTree(list: Comment[]): CommentNode[] {
+  const map = new Map<number, CommentNode>();
+  const roots: CommentNode[] = [];
+
+  list.forEach((c) => map.set(c.id, { ...c, children: [] }));
+  list.forEach((c) => {
+    const node = map.get(c.id)!;
+    if (c.parentId) {
+      const parent = map.get(c.parentId);
+      if (parent) parent.children.push(node);
+      else roots.push(node); // fallback om parent saknas
+    } else {
+      roots.push(node);
+    }
+  });
+  return roots;
+}
+
+const CommentBranch: React.FC<{
+  nodes: CommentNode[];
+  currentUser: User;
+  parentThread?: QNAThread;
+  onMarkAsAnswer?: (commentId: number) => void;
+  onReply?: (parentId: number) => void;
+}> = ({ nodes, currentUser, parentThread, onMarkAsAnswer, onReply }) => {
+  return (
+    <>
+      {nodes.map((n) => (
+        <div key={n.id} style={{ marginLeft: n.parentId ? 24 : 0 }}>
+          <CommentItem
+            comment={n}
+            currentUser={currentUser}
+            parentThread={parentThread}
+            onMarkAsAnswer={onMarkAsAnswer}
+            onReply={onReply}
+          />
+          {n.children.length > 0 && (
+            <CommentBranch
+              nodes={n.children}
+              currentUser={currentUser}
+              parentThread={parentThread}
+              onMarkAsAnswer={onMarkAsAnswer}
+              onReply={onReply}
+            />
+          )}
+        </div>
+      ))}
+    </>
+  );
+};
+
 const CommentList: React.FC<CommentListProps> = ({
-  comments = [],       // defaulta till tom array
+  comments = [],
   currentUser,
-  onMarkAsAnswer
+  parentThread,
+  onMarkAsAnswer,
+  onReply,
 }) => {
-  if (!Array.isArray(comments)) {
-    comments = []; // extra skydd om något konstigt skickas in
-  }
+  const list: Comment[] = Array.isArray(comments) ? comments : [];
+  const tree = buildTree(list);
 
   return (
     <div className="comment-list">
-      {comments.length === 0 ? (
+      {tree.length === 0 ? (
         <p>No comments yet. Be the first to comment!</p>
       ) : (
-        comments.map((comment) => (
-          <CommentItem
-            key={comment.id}
-            comment={comment}
-            currentUser={currentUser}
-            onMarkAsAnswer={onMarkAsAnswer}
-          />
-        ))
+        <CommentBranch
+          nodes={tree}
+          currentUser={currentUser}
+          parentThread={parentThread}
+          onMarkAsAnswer={onMarkAsAnswer}
+          onReply={onReply}
+        />
       )}
     </div>
   );

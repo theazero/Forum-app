@@ -22,7 +22,7 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, onThreadClick, onNewTh
   const { user } = useAuth();
 
   const replyCount = (threadId: number) =>
-    storageService.getCommentsByThreadId(threadId).length; 
+    storageService.getCommentsByThreadId(threadId).length;
 
   return (
     <div className="thread-list-container">
@@ -55,9 +55,12 @@ const ThreadList: React.FC<ThreadListProps> = ({ threads, onThreadClick, onNewTh
                   <span className="category">{getCategoryLabel(thread.category)}</span>
                 </div>
               </div>
+
               <div className="thread-author">{thread.creator.userName}</div>
-              <div className="thread-stats">{replyCount(thread.id)}</div> 
-              <div className="thread-last-post">{new Date(thread.creationDate).toLocaleDateString()}</div>
+              <div className="thread-stats">{replyCount(thread.id)}</div>
+              <div className="thread-last-post">
+                {new Date(thread.creationDate).toLocaleDateString()}
+              </div>
             </div>
           ))
         )}

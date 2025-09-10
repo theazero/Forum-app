@@ -3,7 +3,7 @@ import { Comment } from "../types";
 
 interface CommentFormProps {
   threadId: number;
-  parentId?: number; 
+  parentId?: number;
   onSubmit: (comment: Partial<Comment>) => void | Promise<void>;
   onCancel?: () => void;
   initialContent?: string;
@@ -27,7 +27,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
 
     const commentData: Partial<Comment> = {
       threadId,
-      parentId, 
+      parentId,
       content: content.trim(),
       creationDate: new Date().toISOString(),
       isAnswer: false,

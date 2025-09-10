@@ -6,7 +6,7 @@ export type User = {
   password: string;
   isModerator: boolean;
   joinDate: string;
-}
+};
 
 export type Thread = {
   id: number;
@@ -16,23 +16,23 @@ export type Thread = {
   description: string;
   creator: User;
   isLocked: boolean;
-}
+};
 
 export type QNAThread = Thread & {
   category: "QNA";
   isAnswered: boolean;
   commentAnswerId?: number;
-}
+};
 
 export type Comment = {
   id: number;
   threadId: number;
+  parentId?: number;
   content: string;
-  parentId?: number; 
   creator: User;
   creationDate: string;
   isAnswer: boolean;
-}
+};
 
 export type AuthContextType = {
   user: User | null;
@@ -40,4 +40,4 @@ export type AuthContextType = {
   register: (userName: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
-}
+};

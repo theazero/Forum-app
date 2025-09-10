@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Thread, QNAThread, Comment } from "../types";
 import { useAuth } from "@/contexts/AuthContext";
+import { canMarkAsAnswer } from "src/services/utils/permissions";
 import CommentList from "./CommentList";
 import CommentForm from "./CommentForm";
 
@@ -36,18 +37,16 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
     );
   }
 
-  // Alla inloggade får låsa/öppna
   const handleLockToggle = () => {
     onUpdateThread({ ...thread, isLocked: !thread.isLocked });
   };
 
   const handleMarkAsAnswer = (commentId: number) => {
-    if (isQNA(thread) && user?.id === thread.creator.id) {
-      onUpdateThread({ ...thread, isAnswered: true, commentAnswerId: commentId });
-
-      const comment = comments.find((c) => c.id === commentId);
-      if (comment) onUpdateComment({ ...comment, isAnswer: true });
-    }
+    if (!canMarkAsAnswer(user, thread) || !isQNA(thread)) return;
+    const updated: QNAThread = { ...thread, isAnswered: true, commentAnswerId: commentId };
+    onUpdateThread(updated);
+    const c = comments.find((x) => x.id === commentId);
+    if (c) onUpdateComment({ ...c, isAnswer: true });
   };
 
   const startReply = (parentId: number) => {
@@ -61,14 +60,11 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
 
       <div className="thread-header">
         <h1>{thread.title}</h1>
-
-        {user && (
-          <div className="thread-actions">
-            <button onClick={handleLockToggle} className="btn-lock">
-              {thread.isLocked ? "Unlock" : "Lock"} Thread
-            </button>
-          </div>
-        )}
+        <div className="thread-actions">
+          <button onClick={handleLockToggle} className="btn-lock">
+            {thread.isLocked ? "Unlock" : "Lock"} Thread
+          </button>
+        </div>
       </div>
 
       <div className="thread-meta">

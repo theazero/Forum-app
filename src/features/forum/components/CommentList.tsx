@@ -7,7 +7,7 @@ interface CommentListProps {
   currentUser: User;
   parentThread?: QNAThread;
   onMarkAsAnswer?: (commentId: number) => void;
-  onReply?: (parentId: number) => void; // <-- NYTT
+  onReply?: (parentId: number) => void;
 }
 
 type CommentNode = Comment & { children: CommentNode[] };
@@ -22,7 +22,7 @@ function buildTree(list: Comment[]): CommentNode[] {
     if (c.parentId) {
       const parent = map.get(c.parentId);
       if (parent) parent.children.push(node);
-      else roots.push(node); // fallback om parent saknas
+      else roots.push(node);
     } else {
       roots.push(node);
     }

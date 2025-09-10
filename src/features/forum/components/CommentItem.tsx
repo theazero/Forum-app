@@ -8,7 +8,7 @@ interface CommentItemProps {
   currentUser: User;
   parentThread?: QNAThread;
   onMarkAsAnswer?: (commentId: number) => void;
-  onReply?: (parentId: number) => void; // <-- NYTT
+  onReply?: (parentId: number) => void;
 }
 
 const CommentItem: React.FC<CommentItemProps> = ({
@@ -25,6 +25,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
   const profane = hasProfanity(comment.content);
   const [showRaw, setShowRaw] = useState(false);
+
   const displayText = profane && !showRaw ? censor(comment.content) : comment.content;
 
   return (
@@ -58,13 +59,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
             Reply
           </button>
         )}
-
         {allowMark && onMarkAsAnswer && (
           <button onClick={() => onMarkAsAnswer(comment.id)} className="btn-mark-answer">
             Mark as Answer
           </button>
         )}
-
         {comment.isAnswer && <span className="answer-badge">✓ Answered</span>}
       </div>
     </div>

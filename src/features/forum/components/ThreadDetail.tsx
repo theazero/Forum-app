@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Thread, QNAThread, Comment } from "../types";
 import { useAuth } from "@/contexts/AuthContext";
-import { canLockThread } from "src/services/utils/permissions";
 import CommentList from "./CommentList";
 import CommentForm from "./CommentForm";
 
@@ -37,10 +36,9 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
     );
   }
 
+  // Alla inloggade får låsa/öppna
   const handleLockToggle = () => {
-    if (canLockThread(user)) {
-      onUpdateThread({ ...thread, isLocked: !thread.isLocked });
-    }
+    onUpdateThread({ ...thread, isLocked: !thread.isLocked });
   };
 
   const handleMarkAsAnswer = (commentId: number) => {
@@ -63,7 +61,8 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
 
       <div className="thread-header">
         <h1>{thread.title}</h1>
-        {canLockThread(user) && (
+
+        {user && (
           <div className="thread-actions">
             <button onClick={handleLockToggle} className="btn-lock">
               {thread.isLocked ? "Unlock" : "Lock"} Thread
@@ -90,7 +89,10 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
           {user ? (
             <>
               {!isReplying && (
-                <button onClick={() => { setReplyTo(undefined); setIsReplying(true); }} className="btn-reply">
+                <button
+                  onClick={() => { setReplyTo(undefined); setIsReplying(true); }}
+                  className="btn-reply"
+                >
                   Add Comment
                 </button>
               )}
@@ -104,7 +106,7 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
                   )}
                   <CommentForm
                     threadId={thread.id}
-                    parentId={replyTo}                      
+                    parentId={replyTo}
                     onSubmit={(commentData) => {
                       onAddComment(commentData);
                       setIsReplying(false);
@@ -120,7 +122,7 @@ const ThreadDetail: React.FC<ThreadDetailProps> = ({
                 currentUser={user}
                 parentThread={isQNA(thread) ? thread : undefined}
                 onMarkAsAnswer={isQNA(thread) ? handleMarkAsAnswer : undefined}
-                onReply={startReply}                         
+                onReply={startReply}
               />
             </>
           ) : (
